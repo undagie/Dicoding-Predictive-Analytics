@@ -122,6 +122,8 @@ Berikut tabel kelebihan dan kekurangan setiap algoritma yang digunakan:
 | Support Vector Machine (SVM) | - Efektif dalam ruang dimensi tinggi.<br>- Efektif pada kasus di mana jumlah dimensi lebih besar dari jumlah sampel.<br>- Memiliki keflexibelan dalam pemilihan fungsi kernel. | - Memerlukan pemilihan kernel yang tepat.<br>- Rentan terhadap overfitting pada fitur noise yang banyak.<br>- Waktu dan sumber daya komputasi yang tinggi untuk dataset besar. |
 
 ## Evaluation
+Metrik evaluasi utama yang digunakan untuk mengukur kinerja model dalam proyek ini adalah akurasi dan laporan klasifikasi yang mencakup precision, recall, f1-score, dan support.
+
 Berdasarkan analisis terhadap laporan klasifikasi dari berbagai model machine learning, dapat ditarik beberapa kesimpulan mengenai performa masing-masing model dalam tugas klasifikasi penghasilan menggunakan dataset Adult/Census Dataset. Model XGBoost menunjukkan performa terbaik dengan akurasi tertinggi sebesar 87.06%, diikuti oleh Random Forest dengan akurasi 84.65%, SVM dengan 85.23%, dan Decision Tree dengan 82.30%. XGBoost unggul bukan hanya dalam hal akurasi tetapi juga dalam aspek precision dan F1-score, khususnya untuk kelas penghasilan yang lebih tinggi (>50K).
 
 Dalam aspek precision dan recall untuk kelas dengan penghasilan lebih rendah (<=50K), semua model cenderung menampilkan hasil yang kuat, dengan nilai recall yang sangat tinggi yang menunjukkan kemampuan model untuk mengidentifikasi sebagian besar kasus dalam kelas ini. Namun, untuk kelas dengan penghasilan yang lebih tinggi, terdapat variasi yang lebih signifikan di antara model-model tersebut, dengan XGBoost kembali menonjol karena kemampuannya yang lebih baik dalam mengklasifikasikan kategori ini dibandingkan dengan model lainnya.
@@ -135,11 +137,15 @@ Pemilihan model terbaik tentunya tidak hanya bergantung pada akurasi saja, namun
 | XGBoost | 87.06% | 0.89 | 0.77 | 0.94 | 0.64 | 0.92 | 0.70 |
 | SVM | 85.23% | 0.87 | 0.75 | 0.94 | 0.56 | 0.91 | 0.64 |
 
-Metrik evaluasi utama yang digunakan untuk mengukur kinerja model dalam proyek ini adalah akurasi dan laporan klasifikasi yang mencakup precision, recall, f1-score, dan support.
+Evaluasi selanjutnya adalah hasil dari tuning hyperparameter untuk 3 model dengan akurasi terbaik (Random Forest, XGBoost, dan SVM):
+- Untuk XGBoost, kombinasi hyperparameter terbaik yang ditemukan adalah learning_rate sebesar 0.1, max_depth sebesar 7, dan n_estimators sebesar 200. Dengan set parameter ini, akurasi meningkat menjadi 87.285%, yang menegaskan posisinya sebagai model dengan performa terbaik di antara yang lain.
+- Random Forest juga menunjukkan peningkatan dalam akurasi setelah tuning, dengan akurasi terbaik yang diperoleh sebesar 86.390%. Hyperparameter yang menghasilkan performa terbaik adalah max_depth sebesar 20, min_samples_split sebesar 10, dan n_estimators sebesar 100.
+- Optimasi pada SVM menghasilkan akurasi sebesar 85.634% dengan hyperparameter terbaik: C sebesar 1, gamma dengan nilai 'scale', dan menggunakan kernel 'rbf'.
 
+Kinerja algoritma XGBoost sebelum dan setelah optimasi hyperparameter dapat dikaitkan dengan kemampuannya yang kuat dalam menangani ketidakseimbangan kelas dan fitur-fitur yang kompleks. XGBoost memanfaatkan teknik ensemble yang canggih, memperbaiki kekurangan dari model-model tunggal seperti pohon keputusan dengan menggabungkan mereka dalam pendekatan boosting yang mengurangi bias dan varians. Proses optimasi hyperparameter lebih lanjut menajamkan model ini dengan menyesuaikan learning rate, kedalaman pohon, dan jumlah estimator untuk menemukan keseimbangan yang tepat antara eksplorasi data dan generalisasi prediksi. Random Forest dan SVM, meskipun mengalami peningkatan melalui tuning, secara inheren tidak memiliki struktur ensemble boosting yang sama, yang menjadikan XGBoost pilihan yang lebih tepat dalam kasus ini.
 
 **Rubrik/Kriteria Tambahan:**
-Berikut penjelasan metrik tersebut:
+Berikut penjelasan dan perhitungan metrik tersebut:
 ***Akurasi***
 Akurasi adalah metrik yang paling intuitif dan paling umum digunakan untuk mengukur kinerja model. Ini dihitung dengan membagi jumlah prediksi yang benar dengan jumlah total prediksi.
 ![equation](https://latex.codecogs.com/svg.image?%5Ctext%7BAkurasi%7D=%5Cfrac%7B%5Ctext%7BJumlah%20Prediksi%20Benar%7D%7D%7B%5Ctext%7BJumlah%20Total%20Prediksi%7D)
