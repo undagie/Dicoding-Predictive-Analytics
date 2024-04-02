@@ -7,6 +7,9 @@ Original file is located at
     https://colab.research.google.com/drive/1x2ySUeq7ClKMuDoWDlpIrUvTmHsvTtT9
 
 # Import library dan memuat dataset
+Import library yang diperlukan untuk analisis dan pemodelan data. Ini termasuk `pandas` untuk manipulasi data, `numpy` untuk operasi matematika, `seaborn` dan `matplotlib` untuk visualisasi data, `xgboost` untuk algoritma boosting, serta `sklearn` untuk pemodelan dan evaluasi model machine learning.
+
+Memuat dataset 'adult/census dataset' dari UCI Machine Learning Repository menggunakan `pandas`. Dataset ini berisi informasi demografis dan terkait pekerjaan dari orang dewasa di US yang digunakan untuk memprediksi apakah penghasilan seseorang lebih dari $50K/tahun atau tidak.
 """
 
 import pandas as pd
@@ -28,20 +31,31 @@ from sklearn.metrics import accuracy_score, classification_report
 # https://archive.ics.uci.edu/dataset/2/adult
 df = pd.read_csv('adult.csv')
 
+"""
+Menampilkan lima baris pertama menggunakan `df.head(5)`"""
+
 df.head(5)
 
+""" Menampilkan lima baris terakhir menggunakan `df.tail(5)` untuk mendapatkan gambaran awal tentang data."""
+
 df.tail(5)
+
+"""Menampilkan jumlah baris setiap kolom dengan `df.count()`."""
 
 df.count()
 
 """# Data Understanding
 
 ## Explanatory Data Analysis dan Visualisasi
+
+Menentukan fitur numerik dari dataset dan menampilkan statistik deskriptif untuk fitur tersebut menggunakan `.describe()`. Statistik ini memberikan gambaran tentang rentang, pusat, dan sebaran data numerik.
 """
 
 # Untuk fitur bertipe numeric
 numerical_features = df.select_dtypes(include=[np.number]).columns.tolist()
 print(df[numerical_features].describe())
+
+"""Visualisasi distribusi dan outliers untuk setiap fitur numerik menggunakan histogram dan boxplot. Histogram menunjukkan distribusi frekuensi nilai sedangkan boxplot memberikan visualisasi tentang kuartil dan outliers."""
 
 # Visualisasi fitur bertipe numeric
 for feature in numerical_features:
@@ -49,6 +63,8 @@ for feature in numerical_features:
     sns.histplot(df[feature], bins=30, ax=ax[0], kde=True)
     sns.boxplot(x=df[feature], ax=ax[1])
     plt.show()
+
+"""Menghitung dan visualisasi matriks korelasi antar fitur numerik menggunakan heatmap. Korelasi menunjukkan bagaimana perubahan nilai satu fitur dapat mempengaruhi nilai fitur lainnya."""
 
 # Menghitung korelasi antar fitur numerik
 corr_matrix = df[numerical_features].corr()
@@ -59,11 +75,17 @@ sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm')
 plt.title('Correlation Heatmap of Numerical Features')
 plt.show()
 
+"""Menampilkan jumlah nilai unik menggunakan `value_counts()` untuk memberikan pemahaman tentang distribusi kategori dalam dataset.
+
+"""
+
 # Untuk fitur bertipe kategori
 categorical_features = df.select_dtypes(include=['object']).columns.tolist()
 
 for feature in categorical_features:
     print(df[feature].value_counts())
+
+"""Visualisasi distribusi untuk fitur kategori menggunakan countplot."""
 
 # Visualisasi fitur bertipe kategori
 for feature in categorical_features:
@@ -74,6 +96,8 @@ for feature in categorical_features:
 """# Data Preparation
 
 ## Penanganan Missing Values
+
+Mengganti nilai '?' dengan NaN untuk standarisasi penanganan missing values, menghitung jumlah nilai yang hilang di setiap kolom untuk identifikasi fitur dengan missing values. Kemudian membuat visualisasi jumlah missing values per kolom menggunakan bar chart.
 """
 
 # Mengganti nilai '?' dengan NaN untuk memudahkan penanganan missing values
@@ -85,12 +109,14 @@ missing_values = df.isnull().sum()
 # Visualisasi missing values
 plt.figure(figsize=(10, 6))
 missing_values[missing_values > 0].plot(kind='bar')
-plt.title('Missing Values in Each Column')
-plt.xlabel('Columns')
-plt.ylabel('Number of Missing Values')
+plt.title('Missing Values di Setiap Kolom')
+plt.xlabel('Kolom')
+plt.ylabel('Jumlah Missing Values')
 plt.show()
 
 missing_values[missing_values > 0]
+
+"""Isi missing values pada kolom 'workclass' dan 'occupation' dengan 'Unknown', dan pada 'native.country' dengan modusnya. Cara ini untuk mengatasi missing values tanpa menghapus baris data."""
 
 # Mengisi missing values fitur 'workclass' and 'occupation' dengan 'Unknown'
 df['workclass'].fillna('Unknown', inplace=True)
@@ -103,7 +129,10 @@ df['native.country'].fillna(native_country_mode, inplace=True)
 # Memeriksa kembali missing values
 print(df.isnull().sum())
 
-"""## Penyederhanaan Distribusi Fitur"""
+"""## Penyederhanaan Distribusi Fitur
+
+Melakukan langkah-langkah pra-pemrosesan seperti penghapusan fitur `fnlwgt` dan `income` dan agregasi nilai pada fitur 'native.country'. Kemudian, menentukan kembali fitur numerik dan kategorikal yang akan digunakan dalam pemodelan.
+"""
 
 # Menentukan fitur numerik dan kategorikal untuk pemodelan
 numeric_features = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
@@ -123,7 +152,10 @@ df['native.country'] = df['native.country'].apply(lambda x: x if df['native.coun
 aggregated_native_country_distribution = df['native.country'].value_counts()
 print(aggregated_native_country_distribution)
 
-"""## Persiapan dan Splitting Dataset"""
+"""## Persiapan dan Splitting Dataset
+
+Menerapkan pra-pemrosesan pada set pelatihan dan pengujian menggunakan `ColumnTransformer` yang mengintegrasikan `StandardScaler` untuk fitur numerik dan `OneHotEncoder` untuk fitur kategorikal. Ini memastikan data dalam format yang sesuai untuk pemodelan.
+"""
 
 # Membuat transformer untuk pra-pemrosesan
 preprocessor = ColumnTransformer(
@@ -131,6 +163,8 @@ preprocessor = ColumnTransformer(
         ('num', StandardScaler(), numeric_features),
         ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features)
     ])
+
+"""Memisahkan dataset menjadi fitur (X) dan target (y), kemudian bagi menjadi set pelatihan dan pengujian untuk digunakan validasi model nanti."""
 
 # Memisahkan fitur dan target dan membagi set pelatihan dan pengujian
 X = df.drop(['income', 'fnlwgt'], axis=1)
@@ -147,6 +181,8 @@ model_accuracies = {}
 """# Modeling
 
 ## Logistic Regression
+
+Melatih dan evaluasi model Logistic Regression
 """
 
 # Inisialisasi dan evaluasi Logistic Regression
@@ -158,7 +194,10 @@ model_accuracies['Logistic Regression'] = accuracy_lr
 print(f"Logistic Regression Accuracy: {accuracy_lr:.4f}")
 print(classification_report(y_test, y_pred_lr))
 
-"""## Decision Tree"""
+"""## Decision Tree
+
+Melatih dan evaluasi model Decision Tree
+"""
 
 # Inisialisasi dan evaluasi Decision Tree
 dt_model = DecisionTreeClassifier()
@@ -169,7 +208,10 @@ model_accuracies['Decision Tree'] = accuracy_dt
 print(f"Decision Tree Accuracy: {accuracy_dt:.4f}")
 print(classification_report(y_test, y_pred_dt))
 
-"""## Random Forest"""
+"""## Random Forest
+
+Melatih dan evaluasi model Random Forest
+"""
 
 # Inisialisasi dan evaluasi Random Forest
 rf_model = RandomForestClassifier()
@@ -180,7 +222,10 @@ model_accuracies['Random Forest'] = accuracy_rf
 print(f"Random Forest Accuracy: {accuracy_rf:.4f}")
 print(classification_report(y_test, y_pred_rf))
 
-"""## XGBoost"""
+"""## XGBoost
+
+Melatih dan evaluasi model XGBoost
+"""
 
 # Inisialisasi dan evaluasi XGBoost
 xgb_model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
@@ -191,7 +236,10 @@ model_accuracies['XGBoost'] = accuracy_xgb
 print(f"XGBoost Accuracy: {accuracy_xgb:.4f}")
 print(classification_report(y_test, y_pred_xgb))
 
-"""## SVM"""
+"""## SVM
+
+Melatih dan evaluasi model SVM
+"""
 
 # Inisialisasi dan evaluasi SVM
 svm_model = SVC(probability=True)
@@ -202,7 +250,10 @@ model_accuracies['SVM'] = accuracy_svm
 print(f"SVM Accuracy: {accuracy_svm:.4f}")
 print(classification_report(y_test, y_pred_svm))
 
-"""## Hasil Modeling"""
+"""## Hasil Modeling
+
+Membandingkan akurasi semua model yang telah dilatih dan identifikasi model dengan akurasi terbaik.
+"""
 
 # Cetak hasil akurasi setiap model
 for model, accuracy in model_accuracies.items():
@@ -211,6 +262,8 @@ for model, accuracy in model_accuracies.items():
 # Membandingkan model berdasarkan akurasi
 best_model = max(model_accuracies, key=model_accuracies.get)
 print(f"\nModel dengan akurasi terbaik: {best_model} (Akurasi: {model_accuracies[best_model]:.4f})")
+
+"""Visualisasi perbandingan sebelumnya menggunakan bar chart untuk memudahkan pemahaman."""
 
 # Visualisasi akurasi semua model
 plt.figure(figsize=(10, 6))
@@ -222,6 +275,8 @@ plt.show()
 """# Optimasi Dengan Hyperparameter Grid Search
 
 ## XGBoost
+
+Melakukan tuning hyperparameter untuk model XGBoost menggunakan GridSearchCV.
 """
 
 from sklearn.model_selection import GridSearchCV
@@ -244,7 +299,10 @@ best_model_accuracies['XGBoost'] = xgb_grid_search.best_score_
 print("Best hyperparameters for XGBoost:", xgb_grid_search.best_params_)
 print("Best accuracy for XGBoost:", xgb_grid_search.best_score_)
 
-"""## Random Forest"""
+"""## Random Forest
+
+Melakukan tuning hyperparameter untuk model Random Forest menggunakan GridSearchCV.
+"""
 
 # Definisikan kisi hyperparameter untuk Random Forest
 rf_param_grid = {
@@ -260,7 +318,10 @@ best_model_accuracies['Random Forest'] = rf_grid_search.best_score_
 print("Best hyperparameters for Random Forest:", rf_grid_search.best_params_)
 print("Best accuracy for Random Forest:", rf_grid_search.best_score_)
 
-"""## SVM"""
+"""## SVM
+
+Melakukan tuning hyperparameter untuk model SVM menggunakan GridSearchCV.
+"""
 
 # Definisikan kisi hyperparameter untuk SVM
 svm_param_grid = {
@@ -276,7 +337,10 @@ best_model_accuracies['SVM'] = svm_grid_search.best_score_
 print("Best hyperparameters for SVM:", svm_grid_search.best_params_)
 print("Best accuracy for SVM:", svm_grid_search.best_score_)
 
-"""## Hasil Optimasi"""
+"""## Hasil Optimasi
+
+Menampilkan model dengan akurasi terbaik yang dicapai setelah tuning hyperparameter.
+"""
 
 # Membandingkan model berdasarkan akurasi terbaik dengan hyperparameter
 best_hyper_model = max(best_model_accuracies, key=best_model_accuracies.get)
